@@ -140,7 +140,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "AdvancedHackKey",
         SaveKey = false,
         GrabKeyFromSite = false,
-        Key = loadstring(game:Httpget("https://raw.githubusercontent.com/Cubicplay471lm/rayfieldOriginal/refs/heads/main/keys.txt?token=GHSAT0AAAAAADN6ESA4RDH2E5KMBJ7UHBL42IUSZTQ"))()
+        Key = {"Admin12", "SaBplyr67", "MCplyr64", "11Li-20_dA"} --M*Xx-D*_xX
     }
 })
 
@@ -982,6 +982,30 @@ local ShowMenuButton = SettingsTab:CreateButton({
         })
     end,
 })
+
+ScriptTab:CreateSection("Скрипты")
+
+local 99n = ScriptTab:CreateButton({
+	Name = "99 ночей🏕"
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()
+		Rayfield:Notify({
+			Title = "Скрипт запущен",
+			Duration = 2
+		})
+	end
+})
+
+--local 99n = ScriptTab:CreateButton({
+--	Name = "99 ночей🏕"
+--	Callback = function()
+--		loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()
+--		Rayfield:Notify({
+--			Title = "Скрипт запущен",
+--			Duration = 2
+--		})
+--	end
+--})
 
 -- Создаем кнопку аимбота и FOV круг автоматически
 task.spawn(function()
