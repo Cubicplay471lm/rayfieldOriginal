@@ -138,7 +138,7 @@ local Window = Rayfield:CreateWindow({
         Subtitle = "Key System",
         Note = "Get key from Discord",
         FileName = "AdvancedHackKey",
-        SaveKey = true,
+        SaveKey = false,
         GrabKeyFromSite = false,
         Key = {"TSplyr12", "SaBplyr67", "MCplyr64"}
     }
