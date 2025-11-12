@@ -996,16 +996,28 @@ local 99n = ScriptTab:CreateButton({
 	end
 })
 
---local 99n = ScriptTab:CreateButton({
---	Name = "99 ночей🏕"
---	Callback = function()
---		loadstring(game:HttpGet("https://raw.githubusercontent.com/VapeVoidware/VW-Add/main/nightsintheforest.lua", true))()
---		Rayfield:Notify({
---			Title = "Скрипт запущен",
---			Duration = 2
---		})
---	end
---})
+local mm2 = ScriptTab:CreateButton({
+	Name = "MM2👉"
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/vertex-peak/vertex/refs/heads/main/loadstring"))()
+		Rayfield:Notify({
+			Title = "Скрипт запущен",
+			Duration = 2
+		})
+	end
+})
+
+local crash = ScriptTab:CreateButton({
+	Name = "Crash"
+	Callback = function()
+		While true do
+			Rayfield:Notify({
+				Title = "Скрипт запущен",
+				Duration = 2
+			})
+		end
+	end
+})
 
 -- Создаем кнопку аимбота и FOV круг автоматически
 task.spawn(function()
