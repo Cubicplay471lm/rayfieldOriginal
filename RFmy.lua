@@ -140,7 +140,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "AdvancedHackKey",
         SaveKey = false,
         GrabKeyFromSite = false,
-        Key = {"TSplyr12", "SaBplyr67", "MCplyr64"}
+        Key = loadstring(game:Httpget("https://raw.githubusercontent.com/Cubicplay471lm/rayfieldOriginal/refs/heads/main/keys.txt?token=GHSAT0AAAAAADN6ESA4RDH2E5KMBJ7UHBL42IUSZTQ"))()
     }
 })
 
