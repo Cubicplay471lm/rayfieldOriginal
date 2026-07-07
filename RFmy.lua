@@ -283,7 +283,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "MixwareKey",
         SaveKey = false,
         GrabKeyFromSite = false,
-        Key = {"MIX2026", "KT471_LMR", "MIXWARE_ULTRA", "11Li-20_dA"} 
+        Key = {"MIX2026", "mixwareontop"} 
     }
 })
 
