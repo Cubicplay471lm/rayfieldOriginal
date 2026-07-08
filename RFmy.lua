@@ -8,28 +8,27 @@
     
     MIXWARE.LOL - Ultimate Roblox Script
     Created by: kt471 & Lmrbro
-    Version: 2.0.0
+    Version: 2.1.0
 --]]
 
--- Загрузка Rayfield с поддержкой кастомизации
+-- Загрузка Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Основные сервисы
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 -- Загрузка ESP библиотеки
 local ESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/linemaster2/esp-library/main/library.lua"))();
 
--- Настройки конфигурации с добавлением новых параметров
+-- Настройки конфигурации
 local Config = {
-    -- Настройки интерфейса (НОВОЕ)
-    Theme = "Dark", -- "Dark", "Light", "Purple", "Neon"
-    Transparency = 0.85, -- 0.0 - 1.0
+    -- Настройки интерфейса
+    Theme = "MIXWARE", -- Кастомная фиолетовая тема
+    Transparency = 0.85,
     MenuKey = Enum.KeyCode.K,
     
     -- Основные настройки
@@ -44,7 +43,7 @@ local Config = {
     },
     ChamsEnabled = false,
     AimbotEnabled = false,
-    AimbotToggleMode = true,
+    AimbotKey = Enum.UserInputType.MouseButton2, -- ПКМ
     NoClipEnabled = false,
     SpeedEnabled = false,
     SpeedValue = 50,
@@ -57,7 +56,7 @@ local Config = {
     TriggerbotDelay = 0.1,
     ShowTeammates = false,
     ESPDistance = 500,
-    ESPColor = Color3.fromRGB(255, 255, 255),
+    ESPColor = Color3.fromRGB(180, 80, 255),
     CameraFOV = 70,
     OriginalCameraFOV = 70
 }
@@ -72,23 +71,14 @@ local chamsParts = {}
 local CurrentTarget = nil
 local isAiming = false
 local fovCircle
-local aimbotToggleActive = false
-
--- Круглая кнопка для аимбота
-local AimbotButton = {
-    Button = nil,
-    Gui = nil,
-    IsDragging = false,
-    DragStart = nil,
-    StartPosition = nil
-}
+local aimbotActive = false
 
 -- Создание FOV круга
 local function CreateFOVCircle()
     local success, circle = pcall(function()
         local drawing = Drawing.new("Circle")
         drawing.Visible = false
-        drawing.Color = Color3.fromRGB(255, 0, 0)
+        drawing.Color = Color3.fromRGB(180, 80, 255)
         drawing.Thickness = 2
         drawing.Transparency = 1
         drawing.Filled = false
@@ -103,8 +93,7 @@ local function CreateFOVCircle()
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Drawing API недоступно",
-            Duration = 5,
-            Image = 4483362458
+            Duration = 5
         })
         return nil
     end
@@ -157,12 +146,12 @@ end
 
 local function applyChamsEffect(part)
     part.Material = Enum.Material.ForceField
-    part.Color = Color3.fromRGB(138, 43, 226)
+    part.Color = Color3.fromRGB(180, 80, 255)
     part.Transparency = 0.3
     
     local glow = part:FindFirstChild("ChamsGlow") or Instance.new("SurfaceLight")
     glow.Name = "ChamsGlow"
-    glow.Color = Color3.fromRGB(138, 43, 226)
+    glow.Color = Color3.fromRGB(180, 80, 255)
     glow.Brightness = 2
     glow.Range = 5
     glow.Parent = part
@@ -192,225 +181,6 @@ local function disableChams()
         removeChamsEffect(part)
     end
     chamsParts = {}
-end
-
--- Функция для применения темы и прозрачности к Rayfield
-local function ApplyThemeAndTransparency()
-    local theme = Config.Theme
-    local transparency = Config.Transparency
-    
-    -- Настройка цветов в зависимости от темы
-    local colors = {}
-    if theme == "Dark" then
-        colors = {
-            Background = Color3.fromRGB(20, 20, 30),
-            Background2 = Color3.fromRGB(30, 30, 45),
-            Text = Color3.fromRGB(255, 255, 255),
-            Accent = Color3.fromRGB(100, 100, 255),
-            Accent2 = Color3.fromRGB(80, 80, 200),
-            Border = Color3.fromRGB(60, 60, 80)
-        }
-    elseif theme == "Light" then
-        colors = {
-            Background = Color3.fromRGB(240, 240, 250),
-            Background2 = Color3.fromRGB(220, 220, 235),
-            Text = Color3.fromRGB(0, 0, 0),
-            Accent = Color3.fromRGB(80, 80, 200),
-            Accent2 = Color3.fromRGB(60, 60, 150),
-            Border = Color3.fromRGB(180, 180, 200)
-        }
-    elseif theme == "Purple" then
-        colors = {
-            Background = Color3.fromRGB(25, 10, 40),
-            Background2 = Color3.fromRGB(40, 15, 60),
-            Text = Color3.fromRGB(220, 180, 255),
-            Accent = Color3.fromRGB(180, 80, 255),
-            Accent2 = Color3.fromRGB(150, 50, 220),
-            Border = Color3.fromRGB(100, 40, 150)
-        }
-    elseif theme == "Neon" then
-        colors = {
-            Background = Color3.fromRGB(10, 10, 15),
-            Background2 = Color3.fromRGB(20, 20, 30),
-            Text = Color3.fromRGB(0, 255, 200),
-            Accent = Color3.fromRGB(0, 255, 200),
-            Accent2 = Color3.fromRGB(0, 200, 150),
-            Border = Color3.fromRGB(0, 100, 80)
-        }
-    end
-    
-    -- Применяем прозрачность к основным элементам
-    -- Rayfield имеет ограниченную поддержку прозрачности, поэтому работаем с тем, что доступно
-    -- Создаем глобальную переменную для хранения стилей
-    _G.MixwareTheme = {
-        Colors = colors,
-        Transparency = transparency
-    }
-    
-    -- Применяем кастомные стили для элементов интерфейса (если Rayfield поддерживает)
-    -- Это не прямое изменение Rayfield, а подход с переопределением через хук
-    -- Для полной кастомизации Rayfield используется метод Rayfield:SetConfiguration()
-    
-    -- Обновляем уведомления для демонстрации
-    Rayfield:Notify({
-        Title = "MIXWARE",
-        Content = string.format("Тема: %s | Прозрачность: %.0f%%", theme, transparency * 100),
-        Duration = 3,
-        Image = 4483362458
-    })
-end
-
--- Создание окна Rayfield с брендингом MIXWARE и кастомизацией
-local Window = Rayfield:CreateWindow({
-    Name = "💜 MIXWARE.LOL [kt471 | Lmrbro]",
-    LoadingTitle = "MIXWARE LOADING...",
-    LoadingSubtitle = "Created by kt471 & Lmrbro",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "MixwareConfig",
-        FileName = "MixwareSettings"
-    },
-    Discord = {
-        Enabled = true,
-        Invite = "mixware",
-        RememberJoins = true
-    },
-    KeySystem = true,
-    KeySettings = {
-        Title = "MIXWARE Auth",
-        Subtitle = "Enter Key to Access",
-        Note = "Join Discord: discord.gg/mixware",
-        FileName = "MixwareKey",
-        SaveKey = false,
-        GrabKeyFromSite = false,
-        Key = {"MIX2026", "mixwareontop"} 
-    }
-})
-
--- Создаем функцию для кнопки аимбота
-function AimbotButton:Create()
-    if self.Gui then
-        self.Gui:Destroy()
-    end
-    
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "MixwareAimbotButton"
-    screenGui.ResetOnSpawn = false
-    screenGui.DisplayOrder = 999
-    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
-    local button = Instance.new("Frame")
-    button.Size = UDim2.new(0, 80, 0, 80)
-    button.Position = UDim2.new(0.8, 0, 0.7, 0)
-    button.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    button.BorderSizePixel = 0
-    
-    local uiCorner = Instance.new("UICorner")
-    uiCorner.CornerRadius = UDim.new(1, 0)
-    uiCorner.Parent = button
-    
-    local buttonText = Instance.new("TextButton")
-    buttonText.Size = UDim2.new(1, 0, 1, 0)
-    buttonText.BackgroundTransparency = 1
-    buttonText.Text = "AIM"
-    buttonText.TextColor3 = Color3.new(1, 1, 1)
-    buttonText.Font = Enum.Font.SourceSansBold
-    buttonText.TextSize = 16
-    buttonText.TextScaled = true
-    buttonText.Parent = button
-    
-    local function updateInput(input)
-        local delta = input.Position - self.DragStart
-        local newPosition = UDim2.new(
-            self.StartPosition.X.Scale, 
-            self.StartPosition.X.Offset + delta.X,
-            self.StartPosition.Y.Scale, 
-            self.StartPosition.Y.Offset + delta.Y
-        )
-        button.Position = newPosition
-    end
-
-    buttonText.MouseButton1Down:Connect(function()
-        button.BackgroundColor3 = Color3.fromRGB(200, 30, 30)
-        if Config.AimbotEnabled and Config.AimbotToggleMode then
-            aimbotToggleActive = true
-            CurrentTarget = FindTarget()
-            if CurrentTarget then
-                Rayfield:Notify({
-                    Title = "MIXWARE AIMBOT",
-                    Content = "АКТИВЕН - Цель: " .. CurrentTarget.Name,
-                    Duration = 1,
-                    Image = 4483362458
-                })
-            else
-                Rayfield:Notify({
-                    Title = "MIXWARE AIMBOT",
-                    Content = "Цель не найдена",
-                    Duration = 1,
-                    Image = 4483362458
-                })
-                aimbotToggleActive = false
-            end
-        end
-        
-        self.IsDragging = true
-        self.DragStart = Vector2.new(buttonText.AbsolutePosition.X, buttonText.AbsolutePosition.Y)
-        self.StartPosition = button.Position
-        
-        local connection
-        connection = buttonText.MouseButton1Up:Connect(function()
-            self.IsDragging = false
-            button.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-            if Config.AimbotEnabled and Config.AimbotToggleMode then
-                aimbotToggleActive = false
-            end
-            connection:Disconnect()
-        end)
-    end)
-
-    buttonText.MouseMoved:Connect(function()
-        if self.IsDragging then
-            local mouse = game:GetService("Players").LocalPlayer:GetMouse()
-            local newPosition = UDim2.new(
-                0, mouse.X - 40,
-                0, mouse.Y - 40
-            )
-            button.Position = newPosition
-        end
-    end)
-
-    button.Parent = screenGui
-    screenGui.Parent = game:GetService("CoreGui")
-    
-    self.Button = button
-    self.Gui = screenGui
-    self.Label = buttonText
-    
-    self:UpdateAppearance()
-    
-    Rayfield:Notify({
-        Title = "MIXWARE",
-        Content = "Кнопка AIM создана! Перетащите для перемещения",
-        Duration = 3,
-        Image = 4483362458
-    })
-end
-
-function AimbotButton:UpdateAppearance()
-    if not self.Button or not self.Label then return end
-    
-    if Config.AimbotEnabled then
-        if aimbotToggleActive then
-            self.Button.BackgroundColor3 = Color3.fromRGB(50, 255, 50)
-            self.Label.Text = "✓"
-        else
-            self.Button.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-            self.Label.Text = "AIM"
-        end
-        self.Button.Visible = true
-    else
-        self.Button.Visible = false
-    end
 end
 
 -- Функции аимбота
@@ -554,13 +324,84 @@ local function UpdateESP()
     Config.ESPEnabled = anyESPEnabled
 end
 
+-- СОЗДАНИЕ КАСТОМНОЙ ТЕМЫ MIXWARE (ФИОЛЕТОВАЯ)
+local MixwareTheme = {
+    TextColor = Color3.fromRGB(220, 200, 255),
+    
+    Background = Color3.fromRGB(20, 10, 35),
+    Topbar = Color3.fromRGB(40, 20, 60),
+    Shadow = Color3.fromRGB(15, 5, 25),
+    
+    NotificationBackground = Color3.fromRGB(30, 15, 50),
+    NotificationActionsBackground = Color3.fromRGB(60, 30, 90),
+    
+    TabBackground = Color3.fromRGB(45, 25, 65),
+    TabStroke = Color3.fromRGB(80, 40, 120),
+    TabBackgroundSelected = Color3.fromRGB(180, 80, 255),
+    TabTextColor = Color3.fromRGB(200, 180, 220),
+    SelectedTabTextColor = Color3.fromRGB(255, 255, 255),
+    
+    ElementBackground = Color3.fromRGB(35, 20, 55),
+    ElementBackgroundHover = Color3.fromRGB(50, 30, 75),
+    SecondaryElementBackground = Color3.fromRGB(25, 15, 40),
+    ElementStroke = Color3.fromRGB(80, 40, 120),
+    SecondaryElementStroke = Color3.fromRGB(60, 30, 90),
+    
+    SliderBackground = Color3.fromRGB(180, 80, 255),
+    SliderProgress = Color3.fromRGB(200, 100, 255),
+    SliderStroke = Color3.fromRGB(220, 120, 255),
+    
+    ToggleBackground = Color3.fromRGB(30, 15, 50),
+    ToggleEnabled = Color3.fromRGB(180, 80, 255),
+    ToggleDisabled = Color3.fromRGB(80, 40, 120),
+    ToggleEnabledStroke = Color3.fromRGB(200, 100, 255),
+    ToggleDisabledStroke = Color3.fromRGB(100, 50, 150),
+    ToggleEnabledOuterStroke = Color3.fromRGB(150, 70, 220),
+    ToggleDisabledOuterStroke = Color3.fromRGB(60, 30, 90),
+    
+    DropdownSelected = Color3.fromRGB(50, 30, 75),
+    DropdownUnselected = Color3.fromRGB(30, 15, 50),
+    
+    InputBackground = Color3.fromRGB(30, 15, 50),
+    InputStroke = Color3.fromRGB(80, 40, 120),
+    PlaceholderColor = Color3.fromRGB(150, 130, 180)
+}
+
+-- Создание окна Rayfield с кастомной темой
+local Window = Rayfield:CreateWindow({
+    Name = "💜 MIXWARE.LOL [kt471 | Lmrbro]",
+    LoadingTitle = "MIXWARE LOADING...",
+    LoadingSubtitle = "Created by kt471 & Lmrbro",
+    Theme = MixwareTheme, -- Используем кастомную тему
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MixwareConfig",
+        FileName = "MixwareSettings"
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "mixware",
+        RememberJoins = true
+    },
+    KeySystem = true,
+    KeySettings = {
+        Title = "MIXWARE Auth",
+        Subtitle = "Enter Key to Access",
+        Note = "Join Discord: discord.gg/mixware",
+        FileName = "MixwareKey",
+        SaveKey = false,
+        GrabKeyFromSite = false,
+        Key = {"MIX2026", "KT471_LMR", "MIXWARE_ULTRA", "11Li-20_dA"} 
+    }
+})
+
 -- СОЗДАНИЕ ВКЛАДОК
 local MovementTab = Window:CreateTab("🚀 Движение", 4483362458)
 local VisualTab = Window:CreateTab("👁️ Визуал", 4483362458)
 local CombatTab = Window:CreateTab("🎯 Бой", 4483362458)
 local SettingsTab = Window:CreateTab("⚙️ Настройки", 4483362458)
 local ScriptTab = Window:CreateTab("📜 Скрипты", 4483362458)
-local ThemeTab = Window:CreateTab("🎨 Оформление", 4483362458) -- НОВАЯ ВКЛАДКА
+local ThemeTab = Window:CreateTab("🎨 Оформление", 4483362458)
 
 -- ВКЛАДКА ДВИЖЕНИЕ
 MovementTab:CreateSection("Скорость")
@@ -573,8 +414,7 @@ local SpeedToggle = MovementTab:CreateToggle({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = Value and "Скорость: " .. Config.SpeedValue or "Скорость выключена",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -600,8 +440,7 @@ local JumpToggle = MovementTab:CreateToggle({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = Value and "Прыжок: " .. Config.JumpPowerValue or "Прыжок выключен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -629,16 +468,14 @@ local NoClipToggle = MovementTab:CreateToggle({
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "NoClip включен",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         else
             DisableNoClip()
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "NoClip выключен",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         end
     end,
@@ -665,8 +502,7 @@ local ESPDropdown = VisualTab:CreateDropdown({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Настройки ESP обновлены",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -679,8 +515,7 @@ local FullESPPreset = VisualTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Полный ESP включен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -691,8 +526,7 @@ local MinimalESPPreset = VisualTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Минимальный ESP включен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -703,8 +537,7 @@ local CombatESPPreset = VisualTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Боевой ESP включен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -715,8 +548,7 @@ local ClearESPPreset = VisualTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "ESP отключен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -732,8 +564,7 @@ local ESPColorPicker = VisualTab:CreateColorPicker({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Цвет ESP изменен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -752,8 +583,7 @@ local ESPDistanceSlider = VisualTab:CreateSlider({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Макс. дистанция: " .. Value .. " studs",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -767,8 +597,7 @@ local ShowTeammatesToggle = VisualTab:CreateToggle({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = Value and "Тиммейты отображаются" or "Тиммейты скрыты",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -787,8 +616,7 @@ local CameraFOVSlider = VisualTab:CreateSlider({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "FOV: " .. Value .. "°",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -800,8 +628,7 @@ local ResetFOVButton = VisualTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "FOV сброшен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -818,16 +645,14 @@ local ChamsToggle = VisualTab:CreateToggle({
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "Chams включены",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         else
             disableChams()
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "Chams выключены",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         end
     end,
@@ -843,16 +668,14 @@ local WallhackToggle = VisualTab:CreateToggle({
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "X-Ray включен",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         else
             DisableWallhack()
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "X-Ray выключен",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         end
     end,
@@ -861,48 +684,22 @@ local WallhackToggle = VisualTab:CreateToggle({
 -- ВКЛАДКА БОЙ
 CombatTab:CreateSection("Основные настройки аимбота")
 local AimbotToggle = CombatTab:CreateToggle({
-    Name = "🎯 Аимбот",
+    Name = "🎯 Аимбот (ПКМ)",
     CurrentValue = Config.AimbotEnabled,
     Flag = "AimbotToggle",
     Callback = function(Value)
         Config.AimbotEnabled = Value
-        AimbotButton:UpdateAppearance()
-        
+        if not Value then
+            aimbotActive = false
+        end
         if fovCircle then
             fovCircle.Visible = Value
         end
-        
         Rayfield:Notify({
             Title = "MIXWARE",
-            Content = Value and "Аимбот включен" or "Аимбот выключен",
-            Duration = 2,
-            Image = 4483362458
+            Content = Value and "Аимбот включен (держи ПКМ)" or "Аимбот выключен",
+            Duration = 2
         })
-    end,
-})
-local AimbotModeToggle = CombatTab:CreateToggle({
-    Name = "🔘 Режим кнопки аимбота",
-    CurrentValue = Config.AimbotToggleMode,
-    Flag = "AimbotModeToggle",
-    Callback = function(Value)
-        Config.AimbotToggleMode = Value
-        if Value then
-            Rayfield:Notify({
-                Title = "MIXWARE",
-                Content = "Режим кнопки: ВКЛ (удерживай AIM)",
-                Duration = 3,
-                Image = 4483362458
-            })
-        else
-            aimbotToggleActive = false
-            AimbotButton:UpdateAppearance()
-            Rayfield:Notify({
-                Title = "MIXWARE",
-                Content = "Режим кнопки: ВЫКЛ",
-                Duration = 2,
-                Image = 4483362458
-            })
-        end
     end,
 })
 
@@ -933,8 +730,7 @@ local FOVSlider = CombatTab:CreateSlider({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "FOV: " .. Value,
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -949,8 +745,7 @@ local TriggerbotToggle = CombatTab:CreateToggle({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = Value and "Триггербот включен" or "Триггербот выключен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -966,13 +761,7 @@ local TriggerbotDelaySlider = CombatTab:CreateSlider({
     end,
 })
 
-CombatTab:CreateSection("Кнопка управления")
-local CreateAimbotButton = CombatTab:CreateButton({
-    Name = "🔄 Создать кнопку AIM",
-    Callback = function()
-        AimbotButton:Create()
-    end,
-})
+CombatTab:CreateSection("Отладка")
 local DebugAimbotButton = CombatTab:CreateButton({
     Name = "🐛 Отладка аимбота",
     Callback = function()
@@ -981,15 +770,13 @@ local DebugAimbotButton = CombatTab:CreateButton({
             Rayfield:Notify({
                 Title = "MIXWARE DEBUG",
                 Content = "Цель: " .. target.Name .. "\nFOV: " .. Config.AimbotFOV,
-                Duration = 5,
-                Image = 4483362458
+                Duration = 5
             })
         else
             Rayfield:Notify({
                 Title = "MIXWARE DEBUG",
                 Content = "Цель не найдена!\nПроверьте FOV и наличие игроков",
-                Duration = 5,
-                Image = 4483362458
+                Duration = 5
             })
         end
     end,
@@ -1004,8 +791,7 @@ local HideMenuButton = SettingsTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Меню скрыто. Нажми K чтобы показать",
-            Duration = 3,
-            Image = 4483362458
+            Duration = 3
         })
     end,
 })
@@ -1016,8 +802,7 @@ local ShowMenuButton = SettingsTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Меню показано",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end,
 })
@@ -1031,8 +816,7 @@ local Script99n = ScriptTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Скрипт 99 ночей запущен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end
 })
@@ -1043,8 +827,7 @@ local ScriptMM2 = ScriptTab:CreateButton({
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Скрипт MM2 запущен",
-            Duration = 2,
-            Image = 4483362458
+            Duration = 2
         })
     end
 })
@@ -1055,56 +838,61 @@ local ScriptCrash = ScriptTab:CreateButton({
             Rayfield:Notify({
                 Title = "MIXWARE CRASH",
                 Content = "Скрипт краша запущен",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
             wait(1)
         end
     end
 })
 
--- НОВАЯ ВКЛАДКА: ОФОРМЛЕНИЕ
+-- ВКЛАДКА ОФОРМЛЕНИЕ
 ThemeTab:CreateSection("Настройки темы")
 local ThemeDropdown = ThemeTab:CreateDropdown({
     Name = "🎨 Выбор темы",
-    Options = {"Dark", "Light", "Purple", "Neon"},
-    CurrentOption = Config.Theme,
+    Options = {"MIXWARE (Фиолетовая)", "Default", "AmberGlow", "Amethyst", "Bloom", "DarkBlue", "Green", "Light", "Ocean", "Serenity"},
+    CurrentOption = "MIXWARE (Фиолетовая)",
     Flag = "ThemeDropdown",
     Callback = function(Option)
-        Config.Theme = Option
-        ApplyThemeAndTransparency()
-        Rayfield:Notify({
-            Title = "MIXWARE THEME",
-            Content = "Тема: " .. Option,
-            Duration = 2,
-            Image = 4483362458
-        })
+        if Option == "MIXWARE (Фиолетовая)" then
+            Window:ModifyTheme(MixwareTheme)
+            Rayfield:Notify({
+                Title = "MIXWARE THEME",
+                Content = "Тема: MIXWARE Фиолетовая",
+                Duration = 2
+            })
+        else
+            Window:ModifyTheme(Option)
+            Rayfield:Notify({
+                Title = "MIXWARE THEME",
+                Content = "Тема: " .. Option,
+                Duration = 2
+            })
+        end
     end,
 })
 
-local TransparencySlider = ThemeTab:CreateSlider({
-    Name = "🔲 Прозрачность интерфейса",
-    Range = {0.3, 1.0},
-    Increment = 0.05,
-    Suffix = "%",
-    CurrentValue = Config.Transparency,
-    Flag = "TransparencySlider",
-    Callback = function(Value)
-        Config.Transparency = Value
-        ApplyThemeAndTransparency()
-    end,
-})
-
--- Создаем кнопку аимбота и FOV круг
-task.spawn(function()
-    wait(2)
-    AimbotButton:Create()
-    fovCircle = CreateFOVCircle()
-    ApplyThemeAndTransparency() -- Применяем начальную тему
-end)
-
--- Обработчики ввода
+-- Обработчики ввода для аимбота на ПКМ
 UserInputService.InputBegan:Connect(function(input)
+    -- Аимбот по ПКМ
+    if Config.AimbotEnabled and input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimbotActive = true
+        CurrentTarget = FindTarget()
+        if CurrentTarget then
+            Rayfield:Notify({
+                Title = "MIXWARE AIMBOT",
+                Content = "АКТИВЕН - Цель: " .. CurrentTarget.Name,
+                Duration = 1
+            })
+        else
+            Rayfield:Notify({
+                Title = "MIXWARE AIMBOT",
+                Content = "Цель не найдена",
+                Duration = 1
+            })
+            aimbotActive = false
+        end
+    end
+    
     -- NoClip по N
     if input.KeyCode == Enum.KeyCode.N then
         Config.NoClipEnabled = not Config.NoClipEnabled
@@ -1114,16 +902,14 @@ UserInputService.InputBegan:Connect(function(input)
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "NoClip включен (N)",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         else
             DisableNoClip()
             Rayfield:Notify({
                 Title = "MIXWARE",
                 Content = "NoClip выключен (N)",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         end
     end
@@ -1131,6 +917,14 @@ UserInputService.InputBegan:Connect(function(input)
     -- Открытие/закрытие меню по K
     if input.KeyCode == Config.MenuKey then
         Rayfield:SetVisibility(not Rayfield.Visible)
+    end
+end)
+
+-- Отпускание ПКМ
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then
+        aimbotActive = false
+        CurrentTarget = nil
     end
 end)
 
@@ -1157,18 +951,16 @@ RunService.Heartbeat:Connect(function()
         EnableNoClip()
     end
 
-    -- Аимбот
-    if Config.AimbotEnabled and Config.AimbotToggleMode and aimbotToggleActive then
+    -- Аимбот (ПКМ)
+    if Config.AimbotEnabled and aimbotActive then
         local success = AimAtTarget()
         if not success and CurrentTarget then
             CurrentTarget = nil
-            aimbotToggleActive = false
-            AimbotButton:UpdateAppearance()
+            aimbotActive = false
             Rayfield:Notify({
                 Title = "MIXWARE AIMBOT",
                 Content = "Цель потеряна - выключен",
-                Duration = 2,
-                Image = 4483362458
+                Duration = 2
             })
         end
     end
@@ -1215,19 +1007,23 @@ ESP.ShowTeammates = Config.ShowTeammates
 -- Загрузка конфигурации
 Rayfield:LoadConfiguration()
 
+-- Создаем FOV круг
+task.spawn(function()
+    wait(1)
+    fovCircle = CreateFOVCircle()
+end)
+
 -- Финальные уведомления
 task.spawn(function()
     wait(2)
     Rayfield:Notify({
         Title = "💜 MIXWARE.LOL",
         Content = "Загружено! kt471 & Lmrbro",
-        Duration = 5,
-        Image = 4483362458
+        Duration = 5
     })
     Rayfield:Notify({
         Title = "🎮 Управление",
-        Content = "K - меню | N - NoClip | AIM - аимбот",
-        Duration = 5,
-        Image = 4483362458
+        Content = "K - меню | N - NoClip | ПКМ - аимбот",
+        Duration = 5
     })
 end)
