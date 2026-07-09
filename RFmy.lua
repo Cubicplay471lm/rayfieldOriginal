@@ -16,7 +16,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- ЗАГРУЗКА ESP БИБЛИОТЕКИ (ФАЙЛ 1)
 -- !!! ВАЖНО: Файл mixware_esp.lua должен лежать в той же папке !!!
-local MixwareESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/ваш_репозиторий/mixware_esp.lua"))()
+local MixwareESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/Cubicplay471lm/rayfieldOriginal/refs/heads/main/esp.lua"))()
 local ESP = MixwareESP.new()
 
 -- Основные сервисы
