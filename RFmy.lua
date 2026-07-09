@@ -8,11 +8,59 @@
     
     MIXWARE.LOL - Ultimate Roblox Script
     Created by: kt471 & Lmrbro
+    Version: 11.0.0 - Dynamic Key Loading via HttpGet
 --]]
 
 -- Загрузка Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
+-- ============================================================
+-- ============ ДИНАМИЧЕСКАЯ ЗАГРУЗКА КЛЮЧЕЙ ============
+-- ============================================================
+local HttpService = game:GetService("HttpService")
+local API_URL = "http://93.115.101.161:9781/key/list"
+
+local function FetchKeys()
+    local success, response = pcall(function()
+        return game:HttpGet(API_URL)
+    end)
+    
+    if not success then
+        warn("Не удалось загрузить ключи с сервера, используются запасные")
+        return {"MIX2026", "KT471_LMR", "MIXWARE_ULTRA"}
+    end
+    
+    local data
+    success, data = pcall(function()
+        return HttpService:JSONDecode(response)
+    end)
+    
+    if not success or not data or not data.keys then
+        warn("Ошибка парсинга JSON, используются запасные ключи")
+        return {"MIX2026", "KT471_LMR", "MIXWARE_ULTRA"}
+    end
+    
+    local keys = {}
+    for _, k in ipairs(data.keys) do
+        if not k.used then
+            table.insert(keys, k.key)
+        end
+    end
+    
+    if #keys == 0 then
+        warn("Нет доступных ключей, используются запасные")
+        return {"MIX2026", "KT471_LMR", "MIXWARE_ULTRA"}
+    end
+    
+    return keys
+end
+
+-- Загружаем ключи синхронно (скрипт подождёт)
+local Keys = FetchKeys()
+
+-- ============================================================
+-- ============ ОСТАЛЬНОЙ КОД (ESP, Aimbot, UI) ============
+-- ============================================================
 -- Основные сервисы
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -449,7 +497,6 @@ local function UpdateESP()
         if ShowInventory then
             local InventoryItems = GetPlayerInventory(Player)
             
-            -- Удаляем старые объекты инвентаря
             for _, obj in pairs(Objects.Inventory) do
                 pcall(function() obj:Remove() end)
             end
@@ -652,7 +699,7 @@ Aimbot:SetLockPart(Config.AimbotLockPart)
 Aimbot:SetEnabled(Config.AimbotEnabled)
 
 -- ============================================================
--- ============ СОЗДАНИЕ ОКНА ============
+-- ============ СОЗДАНИЕ ОКНА RAYFIELD ============
 -- ============================================================
 local Window = Rayfield:CreateWindow({
     Name = "💜 MIXWARE.LOL [kt471 | Lmrbro]",
@@ -671,18 +718,18 @@ local Window = Rayfield:CreateWindow({
     },
     KeySystem = true,
     KeySettings = {
-        Title = "MIXWARE Auth",
-        Subtitle = "Enter Key to Access",
-        Note = "Join Discord: discord.gg/mixware",
+        Title = "💜 MIXWARE Auth",
+        Subtitle = "Введите ключ для доступа",
+        Note = "Ключи динамически загружены с сервера",
         FileName = "MixwareKey",
         SaveKey = false,
         GrabKeyFromSite = false,
-        Key = {"MIX2026", "KT471_LMR", "MIXWARE_ULTRA", "11Li-20_dA"}
+        Key = Keys -- Динамически загруженные ключи
     }
 })
 
 -- ============================================================
--- ============ ВКЛАДКИ ============
+-- ============ ВКЛАДКИ (полный функционал) ============
 -- ============================================================
 local MovementTab = Window:CreateTab("🚀 Движение", 4483362458)
 local VisualTab = Window:CreateTab("👁️ Визуал", 4483362458)
