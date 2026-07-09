@@ -8,11 +8,16 @@
     
     MIXWARE.LOL - Ultimate Roblox Script
     Created by: kt471 & Lmrbro
-    Version: 4.0.0
+    Version: 6.0.0
 --]]
 
 -- Загрузка Rayfield
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- ЗАГРУЗКА ESP БИБЛИОТЕКИ (ФАЙЛ 1)
+-- !!! ВАЖНО: Файл mixware_esp.lua должен лежать в той же папке !!!
+local MixwareESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/ваш_репозиторий/mixware_esp.lua"))()
+local ESP = MixwareESP.new()
 
 -- Основные сервисы
 local Players = game:GetService("Players")
@@ -21,21 +26,6 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
-
--- ============ UNNAMED ESP (РАБОЧАЯ) ============
-local UnnamedESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua"))()
-local ESP = UnnamedESP.new()
-
--- Настройки ESP по умолчанию
-ESP.Players = true
-ESP.Boxes = false
-ESP.Names = false
-ESP.Healthbars = false
-ESP.Distance = false
-ESP.Tracers = false
-ESP.Skeletons = false
-ESP.Colors = Color3.fromRGB(180, 80, 255)
-ESP.MaxDistance = 500
 
 -- ============ АИМБОТ БИБЛИОТЕКА ============
 local AimbotLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/Aimbot/Aimbot"))()
@@ -50,9 +40,12 @@ local Config = {
     ESPHealth = false,
     ESPDistance = false,
     ESPTracers = false,
+    ESPHeadDots = false,
     ESPSkeletons = false,
+    ESPInventory = false,
     ESPColor = Color3.fromRGB(180, 80, 255),
     ESPMaxDistance = 500,
+    ESPTeamCheck = false,
     
     -- Аимбот настройки
     AimbotEnabled = false,
@@ -70,8 +63,6 @@ local Config = {
     SpeedValue = 50,
     JumpPowerEnabled = false,
     JumpPowerValue = 50,
-    WallhackEnabled = false,
-    ChamsEnabled = false,
     TriggerbotEnabled = false,
     TriggerbotDelay = 0.1,
     
@@ -127,18 +118,10 @@ Aimbot:SetVisibleCheck(Config.AimbotVisibleCheck)
 Aimbot:SetLockPart(Config.AimbotLockPart)
 Aimbot:SetEnabled(Config.AimbotEnabled)
 
--- ============ ФУНКЦИЯ ОБНОВЛЕНИЯ ESP ============
-local function UpdateESP()
-    ESP.Enabled = Config.ESPEnabled
-    ESP.Boxes = Config.ESPBoxes
-    ESP.Names = Config.ESPNames
-    ESP.Healthbars = Config.ESPHealth
-    ESP.Distance = Config.ESPDistance
-    ESP.Tracers = Config.ESPTracers
-    ESP.Skeletons = Config.ESPSkeletons
-    ESP.Colors = Config.ESPColor
-    ESP.MaxDistance = Config.ESPMaxDistance
-end
+-- ============ НАСТРОЙКА ESP ============
+ESP:SetColor(Config.ESPColor)
+ESP:SetMaxDistance(Config.ESPMaxDistance)
+ESP:ToggleTeamCheck(Config.ESPTeamCheck)
 
 -- ============ СОЗДАНИЕ ОКНА ============
 local Window = Rayfield:CreateWindow({
@@ -272,7 +255,7 @@ local NoClipToggle = MovementTab:CreateToggle({
 })
 
 -- ============ ВКЛАДКА ВИЗУАЛ ============
-VisualTab:CreateSection("Настройки ESP")
+VisualTab:CreateSection("Основные настройки ESP")
 
 local ESPToggle = VisualTab:CreateToggle({
     Name = "👁️ Включить ESP",
@@ -280,7 +263,7 @@ local ESPToggle = VisualTab:CreateToggle({
     Flag = "ESPToggle",
     Callback = function(Value)
         Config.ESPEnabled = Value
-        ESP.Enabled = Value
+        ESP:SetEnabled(Value)
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = Value and "ESP включен" or "ESP выключен",
@@ -297,7 +280,7 @@ local ESPBoxesToggle = VisualTab:CreateToggle({
     Flag = "ESPBoxes",
     Callback = function(Value)
         Config.ESPBoxes = Value
-        ESP.Boxes = Value
+        ESP:ToggleBoxes(Value)
     end,
 })
 
@@ -307,7 +290,7 @@ local ESPNamesToggle = VisualTab:CreateToggle({
     Flag = "ESPNames",
     Callback = function(Value)
         Config.ESPNames = Value
-        ESP.Names = Value
+        ESP:ToggleNames(Value)
     end,
 })
 
@@ -317,7 +300,7 @@ local ESPHealthToggle = VisualTab:CreateToggle({
     Flag = "ESPHealth",
     Callback = function(Value)
         Config.ESPHealth = Value
-        ESP.Healthbars = Value
+        ESP:ToggleHealth(Value)
     end,
 })
 
@@ -327,7 +310,7 @@ local ESPDistanceToggle = VisualTab:CreateToggle({
     Flag = "ESPDistance",
     Callback = function(Value)
         Config.ESPDistance = Value
-        ESP.Distance = Value
+        ESP:ToggleDistance(Value)
     end,
 })
 
@@ -337,7 +320,17 @@ local ESPTracersToggle = VisualTab:CreateToggle({
     Flag = "ESPTracers",
     Callback = function(Value)
         Config.ESPTracers = Value
-        ESP.Tracers = Value
+        ESP:ToggleTracers(Value)
+    end,
+})
+
+local ESPHeadDotsToggle = VisualTab:CreateToggle({
+    Name = "🔴 Точка на голове",
+    CurrentValue = Config.ESPHeadDots,
+    Flag = "ESPHeadDots",
+    Callback = function(Value)
+        Config.ESPHeadDots = Value
+        ESP:ToggleHeadDots(Value)
     end,
 })
 
@@ -347,11 +340,21 @@ local ESPSkeletonsToggle = VisualTab:CreateToggle({
     Flag = "ESPSkeletons",
     Callback = function(Value)
         Config.ESPSkeletons = Value
-        ESP.Skeletons = Value
+        ESP:ToggleSkeletons(Value)
     end,
 })
 
-VisualTab:CreateSection("Цвет ESP")
+local ESPInventoryToggle = VisualTab:CreateToggle({
+    Name = "🎒 Инвентарь",
+    CurrentValue = Config.ESPInventory,
+    Flag = "ESPInventory",
+    Callback = function(Value)
+        Config.ESPInventory = Value
+        ESP:ToggleInventory(Value)
+    end,
+})
+
+VisualTab:CreateSection("Настройки цвета")
 
 local ESPColorPicker = VisualTab:CreateColorPicker({
     Name = "🎨 Цвет ESP",
@@ -359,7 +362,7 @@ local ESPColorPicker = VisualTab:CreateColorPicker({
     Flag = "ESPColor",
     Callback = function(Color)
         Config.ESPColor = Color
-        ESP.Colors = Color
+        ESP:SetColor(Color)
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Цвет ESP изменен",
@@ -368,7 +371,7 @@ local ESPColorPicker = VisualTab:CreateColorPicker({
     end,
 })
 
-VisualTab:CreateSection("Другие настройки")
+VisualTab:CreateSection("Дополнительные настройки")
 
 local ESPDistanceSlider = VisualTab:CreateSlider({
     Name = "📏 Макс. дистанция",
@@ -379,11 +382,21 @@ local ESPDistanceSlider = VisualTab:CreateSlider({
     Flag = "ESPMaxDistance",
     Callback = function(Value)
         Config.ESPMaxDistance = Value
-        ESP.MaxDistance = Value
+        ESP:SetMaxDistance(Value)
     end,
 })
 
-VisualTab:CreateSection("Камера")
+local ESPTeamCheckToggle = VisualTab:CreateToggle({
+    Name = "👥 Командный цвет (зелёный)",
+    CurrentValue = Config.ESPTeamCheck,
+    Flag = "ESPTeamCheck",
+    Callback = function(Value)
+        Config.ESPTeamCheck = Value
+        ESP:ToggleTeamCheck(Value)
+    end,
+})
+
+VisualTab:CreateSection("Настройки камеры")
 
 local CameraFOVSlider = VisualTab:CreateSlider({
     Name = "📷 FOV камеры",
@@ -636,11 +649,6 @@ UserInputService.InputBegan:Connect(function(input)
     -- Аимбот по ПКМ
     if Config.AimbotEnabled and input.UserInputType == Config.AimbotKey then
         Aimbot:Start()
-        Rayfield:Notify({
-            Title = "MIXWARE AIMBOT",
-            Content = "Активен",
-            Duration = 0.5
-        })
     end
     
     -- NoClip по N
@@ -726,6 +734,9 @@ RunService.Heartbeat:Connect(function()
             end)
         end
     end
+    
+    -- Обновление ESP (каждый кадр)
+    ESP:Update()
 end)
 
 -- ============ ЗАПУСК ============
