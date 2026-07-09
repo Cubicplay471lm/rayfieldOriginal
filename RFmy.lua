@@ -8,7 +8,7 @@
     
     MIXWARE.LOL - Ultimate Roblox Script
     Created by: kt471 & Lmrbro
-    Version: 3.1.0
+    Version: 4.0.0
 --]]
 
 -- Загрузка Rayfield
@@ -20,13 +20,24 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
 
--- ============ ESP БИБЛИОТЕКА ============
-local ESPLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/ESP/Esp"))()
-local ESP = ESPLibrary.new()
+-- ============ UNNAMED ESP (РАБОЧАЯ) ============
+local UnnamedESP = loadstring(game:HttpGet("https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua"))()
+local ESP = UnnamedESP.new()
+
+-- Настройки ESP по умолчанию
+ESP.Players = true
+ESP.Boxes = false
+ESP.Names = false
+ESP.Healthbars = false
+ESP.Distance = false
+ESP.Tracers = false
+ESP.Skeletons = false
+ESP.Colors = Color3.fromRGB(180, 80, 255)
+ESP.MaxDistance = 500
 
 -- ============ АИМБОТ БИБЛИОТЕКА ============
--- Загружаем проверенную аимбот библиотеку
 local AimbotLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/main/Aimbot/Aimbot"))()
 local Aimbot = AimbotLibrary.new()
 
@@ -34,23 +45,24 @@ local Aimbot = AimbotLibrary.new()
 local Config = {
     -- ESP настройки
     ESPEnabled = false,
-    ESPBox = false,
-    ESPName = false,
+    ESPBoxes = false,
+    ESPNames = false,
     ESPHealth = false,
     ESPDistance = false,
-    ESPTracer = false,
+    ESPTracers = false,
+    ESPSkeletons = false,
     ESPColor = Color3.fromRGB(180, 80, 255),
-    ESPDistanceLimit = 500,
-    ESPShowTeammates = false,
+    ESPMaxDistance = 500,
     
     -- Аимбот настройки
     AimbotEnabled = false,
-    AimbotKey = Enum.UserInputType.MouseButton2, -- ПКМ
+    AimbotKey = Enum.UserInputType.MouseButton2,
     AimbotSmoothness = 0.3,
     AimbotFOV = 150,
-    AimbotPriority = "Distance", -- Distance, Health, ClosestToCrosshair
+    AimbotPriority = "Distance",
     AimbotTeamCheck = false,
     AimbotVisibleCheck = true,
+    AimbotLockPart = "Head",
     
     -- Другие настройки
     NoClipEnabled = false,
@@ -65,8 +77,7 @@ local Config = {
     
     -- Интерфейс
     Theme = "MIXWARE",
-    MenuKey = Enum.KeyCode.K,
-    Transparency = 0.85
+    MenuKey = Enum.KeyCode.K
 }
 
 -- Сохраняем оригинальный FOV
@@ -107,28 +118,27 @@ local MixwareTheme = {
     PlaceholderColor = Color3.fromRGB(150, 130, 180)
 }
 
--- ============ НАСТРОЙКА ESP ============
-ESP:SetColor(Config.ESPColor)
-ESP:SetDistance(Config.ESPDistanceLimit)
-ESP:SetTeamCheck(Config.ESPShowTeammates)
-
--- Функция обновления ESP
-local function UpdateESP()
-    ESP:Toggle(Config.ESPEnabled)
-    ESP:ShowBox(Config.ESPBox)
-    ESP:ShowName(Config.ESPName)
-    ESP:ShowHealth(Config.ESPHealth)
-    ESP:ShowDistance(Config.ESPDistance)
-    ESP:ShowTracer(Config.ESPTracer)
-end
-
 -- ============ НАСТРОЙКА АИМБОТА ============
 Aimbot:SetSmoothness(Config.AimbotSmoothness)
 Aimbot:SetFOV(Config.AimbotFOV)
 Aimbot:SetPriority(Config.AimbotPriority)
 Aimbot:SetTeamCheck(Config.AimbotTeamCheck)
 Aimbot:SetVisibleCheck(Config.AimbotVisibleCheck)
+Aimbot:SetLockPart(Config.AimbotLockPart)
 Aimbot:SetEnabled(Config.AimbotEnabled)
+
+-- ============ ФУНКЦИЯ ОБНОВЛЕНИЯ ESP ============
+local function UpdateESP()
+    ESP.Enabled = Config.ESPEnabled
+    ESP.Boxes = Config.ESPBoxes
+    ESP.Names = Config.ESPNames
+    ESP.Healthbars = Config.ESPHealth
+    ESP.Distance = Config.ESPDistance
+    ESP.Tracers = Config.ESPTracers
+    ESP.Skeletons = Config.ESPSkeletons
+    ESP.Colors = Config.ESPColor
+    ESP.MaxDistance = Config.ESPMaxDistance
+end
 
 -- ============ СОЗДАНИЕ ОКНА ============
 local Window = Rayfield:CreateWindow({
@@ -270,7 +280,7 @@ local ESPToggle = VisualTab:CreateToggle({
     Flag = "ESPToggle",
     Callback = function(Value)
         Config.ESPEnabled = Value
-        ESP:Toggle(Value)
+        ESP.Enabled = Value
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = Value and "ESP включен" or "ESP выключен",
@@ -279,23 +289,25 @@ local ESPToggle = VisualTab:CreateToggle({
     end,
 })
 
-local ESPBoxToggle = VisualTab:CreateToggle({
+VisualTab:CreateSection("Типы ESP")
+
+local ESPBoxesToggle = VisualTab:CreateToggle({
     Name = "📦 Боксы",
-    CurrentValue = Config.ESPBox,
-    Flag = "ESPBox",
+    CurrentValue = Config.ESPBoxes,
+    Flag = "ESPBoxes",
     Callback = function(Value)
-        Config.ESPBox = Value
-        ESP:ShowBox(Value)
+        Config.ESPBoxes = Value
+        ESP.Boxes = Value
     end,
 })
 
-local ESPNameToggle = VisualTab:CreateToggle({
+local ESPNamesToggle = VisualTab:CreateToggle({
     Name = "🏷️ Имена",
-    CurrentValue = Config.ESPName,
-    Flag = "ESPName",
+    CurrentValue = Config.ESPNames,
+    Flag = "ESPNames",
     Callback = function(Value)
-        Config.ESPName = Value
-        ESP:ShowName(Value)
+        Config.ESPNames = Value
+        ESP.Names = Value
     end,
 })
 
@@ -305,7 +317,7 @@ local ESPHealthToggle = VisualTab:CreateToggle({
     Flag = "ESPHealth",
     Callback = function(Value)
         Config.ESPHealth = Value
-        ESP:ShowHealth(Value)
+        ESP.Healthbars = Value
     end,
 })
 
@@ -315,17 +327,27 @@ local ESPDistanceToggle = VisualTab:CreateToggle({
     Flag = "ESPDistance",
     Callback = function(Value)
         Config.ESPDistance = Value
-        ESP:ShowDistance(Value)
+        ESP.Distance = Value
     end,
 })
 
-local ESPTracerToggle = VisualTab:CreateToggle({
+local ESPTracersToggle = VisualTab:CreateToggle({
     Name = "🔺 Трейсеры",
-    CurrentValue = Config.ESPTracer,
-    Flag = "ESPTracer",
+    CurrentValue = Config.ESPTracers,
+    Flag = "ESPTracers",
     Callback = function(Value)
-        Config.ESPTracer = Value
-        ESP:ShowTracer(Value)
+        Config.ESPTracers = Value
+        ESP.Tracers = Value
+    end,
+})
+
+local ESPSkeletonsToggle = VisualTab:CreateToggle({
+    Name = "💀 Скелетоны",
+    CurrentValue = Config.ESPSkeletons,
+    Flag = "ESPSkeletons",
+    Callback = function(Value)
+        Config.ESPSkeletons = Value
+        ESP.Skeletons = Value
     end,
 })
 
@@ -337,7 +359,7 @@ local ESPColorPicker = VisualTab:CreateColorPicker({
     Flag = "ESPColor",
     Callback = function(Color)
         Config.ESPColor = Color
-        ESP:SetColor(Color)
+        ESP.Colors = Color
         Rayfield:Notify({
             Title = "MIXWARE",
             Content = "Цвет ESP изменен",
@@ -353,21 +375,11 @@ local ESPDistanceSlider = VisualTab:CreateSlider({
     Range = {0, 1000},
     Increment = 50,
     Suffix = "studs",
-    CurrentValue = Config.ESPDistanceLimit,
-    Flag = "ESPDistanceLimit",
+    CurrentValue = Config.ESPMaxDistance,
+    Flag = "ESPMaxDistance",
     Callback = function(Value)
-        Config.ESPDistanceLimit = Value
-        ESP:SetDistance(Value)
-    end,
-})
-
-local ShowTeammatesToggle = VisualTab:CreateToggle({
-    Name = "👥 Показывать тиммейтов",
-    CurrentValue = Config.ESPShowTeammates,
-    Flag = "ShowTeammates",
-    Callback = function(Value)
-        Config.ESPShowTeammates = Value
-        ESP:SetTeamCheck(Value)
+        Config.ESPMaxDistance = Value
+        ESP.MaxDistance = Value
     end,
 })
 
@@ -460,6 +472,22 @@ local PriorityDropdown = CombatTab:CreateDropdown({
     end,
 })
 
+local LockPartDropdown = CombatTab:CreateDropdown({
+    Name = "Часть тела для прицела",
+    Options = {"Head", "Torso", "HumanoidRootPart"},
+    CurrentOption = Config.AimbotLockPart,
+    Flag = "LockPart",
+    Callback = function(Option)
+        Config.AimbotLockPart = Option
+        Aimbot:SetLockPart(Option)
+        Rayfield:Notify({
+            Title = "MIXWARE",
+            Content = "Цель: " .. Option,
+            Duration = 2
+        })
+    end,
+})
+
 local TeamCheckToggle = CombatTab:CreateToggle({
     Name = "🚫 Игнорировать тиммейтов",
     CurrentValue = Config.AimbotTeamCheck,
@@ -535,6 +563,47 @@ local ScriptMM2 = ScriptTab:CreateButton({
     end
 })
 
+local ScriptCrash = ScriptTab:CreateButton({
+    Name = "💥 Crash (Тест)",
+    Callback = function()
+        while true do
+            Rayfield:Notify({
+                Title = "MIXWARE CRASH",
+                Content = "Скрипт краша запущен",
+                Duration = 2
+            })
+            wait(1)
+        end
+    end
+})
+
+-- ============ ВКЛАДКА НАСТРОЙКИ ============
+SettingsTab:CreateSection("Управление меню")
+
+local HideMenuButton = SettingsTab:CreateButton({
+    Name = "👁️ Скрыть меню (K)",
+    Callback = function()
+        Rayfield:SetVisibility(false)
+        Rayfield:Notify({
+            Title = "MIXWARE",
+            Content = "Меню скрыто. Нажми K чтобы показать",
+            Duration = 3
+        })
+    end,
+})
+
+local ShowMenuButton = SettingsTab:CreateButton({
+    Name = "👁️ Показать меню",
+    Callback = function()
+        Rayfield:SetVisibility(true)
+        Rayfield:Notify({
+            Title = "MIXWARE",
+            Content = "Меню показано",
+            Duration = 2
+        })
+    end,
+})
+
 -- ============ ВКЛАДКА ОФОРМЛЕНИЕ ============
 ThemeTab:CreateSection("Настройки темы")
 
@@ -567,6 +636,11 @@ UserInputService.InputBegan:Connect(function(input)
     -- Аимбот по ПКМ
     if Config.AimbotEnabled and input.UserInputType == Config.AimbotKey then
         Aimbot:Start()
+        Rayfield:Notify({
+            Title = "MIXWARE AIMBOT",
+            Content = "Активен",
+            Duration = 0.5
+        })
     end
     
     -- NoClip по N
